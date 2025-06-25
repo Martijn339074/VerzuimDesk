@@ -57,15 +57,36 @@ class VerzuimController extends Controller
         $filtered = collect($dataRows)->filter(function($row) use ($klasIndex, $request) {
             return isset($row[$klasIndex]) && $row[$klasIndex] == $request->klas;
         });
-        $gemiddelde = $filtered->avg(function($row) use ($verzuimIndex) {
+        $afwezigIndex = array_search('% ongeoorloofd afwezig', $header);
+        $geoorloofdIndex = array_search('% geoorloofd afwezig', $header);
+        $nietGeregistreerdIndex = array_search('% niet geregistreerde lestijd', $header);
+
+        $gemiddeldeAanwezig = $filtered->avg(function($row) use ($verzuimIndex) {
             if (!isset($row[$verzuimIndex])) return 0;
             $value = str_replace([',', '%'], ['.', ''], $row[$verzuimIndex]);
             return floatval($value);
-        });
-        $gemiddelde = $gemiddelde * 100; // Convert to percentage
+        }) * 100;
+        $gemiddeldeGeoorloofd = $filtered->avg(function($row) use ($geoorloofdIndex) {
+            if (!isset($row[$geoorloofdIndex])) return 0;
+            $value = str_replace([',', '%'], ['.', ''], $row[$geoorloofdIndex]);
+            return floatval($value);
+        }) * 100;
+        $gemiddeldeOngeoorloofd = $filtered->avg(function($row) use ($afwezigIndex) {
+            if (!isset($row[$afwezigIndex])) return 0;
+            $value = str_replace([',', '%'], ['.', ''], $row[$afwezigIndex]);
+            return floatval($value);
+        }) * 100;
+        $gemiddeldeNietGeregistreerd = $filtered->avg(function($row) use ($nietGeregistreerdIndex) {
+            if (!isset($row[$nietGeregistreerdIndex])) return 0;
+            $value = str_replace([',', '%'], ['.', ''], $row[$nietGeregistreerdIndex]);
+            return floatval($value);
+        }) * 100;
         return view('verzuim.result', [
             'klas' => $request->klas,
-            'gemiddelde' => $gemiddelde,
+            'gemiddelde' => $gemiddeldeAanwezig,
+            'geoorloofd' => $gemiddeldeGeoorloofd,
+            'ongeoorloofd' => $gemiddeldeOngeoorloofd,
+            'nietGeregistreerd' => $gemiddeldeNietGeregistreerd,
         ]);
     }
 }
